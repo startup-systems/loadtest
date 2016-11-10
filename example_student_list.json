@@ -1,0 +1,12 @@
+{
+  "Students": {
+    "studenta": {
+      "Name" : "studenta",
+      "URL" : "http://bla.com/"
+    },
+    "studentb": {
+      "Name" : "studentb",
+      "URL" : "http://blabla.com/"
+    }
+  }
+}

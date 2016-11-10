@@ -1,0 +1,15 @@
+{
+  "URLs" : [
+    { 
+      "URL" : "/process_image?fetch=help.jpg",
+      "expected_result" : { 
+        "result" : "2384823" 
+      }
+    },{
+      "URL" : "/some_url",
+      "expected_result" : { 
+        "some" : "json" 
+      }
+    }
+  ]
+}
