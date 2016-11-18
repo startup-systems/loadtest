@@ -1,12 +1,8 @@
 {
   "Students": {
-    "studenta": {
+    "aidan": {
       "Name" : "studenta",
-      "URL" : "http://bla.com/"
-    },
-    "studentb": {
-      "Name" : "studentb",
-      "URL" : "http://blabla.com/"
+      "URL" : "images.afeld.me"
     }
   }
 }

@@ -2,6 +2,7 @@
 import urllib2
 import json
 
+student_list = json.loads(open('../example_student_list.json', 'r').read())
 hostname = 'http://images.afeld.me/api/num_colors?src='
 correct_responses = 0
 incorrect_responses = 0
