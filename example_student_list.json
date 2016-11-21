@@ -3,6 +3,10 @@
     "aidan": {
       "Name" : "studenta",
       "URL" : "images.afeld.me"
+    },
+    "aidan_aws": {
+      "Name" : "studenta",
+      "URL" : "images-aws.afeld.me"
     }
   }
 }
