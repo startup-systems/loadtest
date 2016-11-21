@@ -35,13 +35,14 @@ for student in student_list['Students']:
       except ValueError as e:
           incorrect_responses += 1
           continue
-      if int(http_result) == expected_result:
+      acceptable_error = expected_result * .05
+      if int(http_result) <= expected_result + acceptable_error and int(http_result) >= expected_result - acceptable_error:
           correct_responses += 1
           print "correct response"
       else:
           incorrect_responses += 1
   ts = time.time()
-  score_file.write(str(datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')) + ", " + str(correct_responses) + ", " + str(incorrect_responses) + " incorrect_responses")
+  score_file.write(str(datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')) + ", correct responses: " + str(correct_responses) + ", incorect_responses: " + str(incorrect_responses) + "\n")
   score_file.close()
     
 
