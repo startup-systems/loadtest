@@ -23,10 +23,9 @@ bucket = s3.Bucket(BUCKET_NAME)
 for student in student_list['Students']:
     student_start_time = datetime.datetime.now().replace(microsecond=0)
     print "====================================\nStarting student " + student
-    today_date = time.strftime("%m-%d-%y")
     student_dir = BASE_OUTPUT_DIR + student
-    siege_filename = '{}/{}-siege.log'.format(student_dir, today_date)
-    score_filename = '{}/{}-score.log'.format(student_dir, today_date)
+    siege_filename = '{}/siege.log'.format(student_dir)
+    score_filename = '{}/score.log'.format(student_dir)
     first_part_url = "http://" + student_list['Students'][student]['URL'] + '/api/num_colors?src='
     # create direcotry for students stuff
     if not os.path.exists(student_dir):
@@ -97,16 +96,16 @@ for student in student_list['Students']:
     score_file.close()
 
     print "Finished student " + student + "\nElapsed time: " + str(student_elapsed_time)
-    seconds_to_wait = (datetime.timedelta(minutes=MINS_TO_RUN_SIEGE) - student_elapsed_time).seconds
-    if seconds_to_wait < 1:
+    if student_elapsed_time < datetime.timedelta(minutes=MINS_TO_RUN_SIEGE):
+        seconds_to_wait = (datetime.timedelta(minutes=MINS_TO_RUN_SIEGE) - student_elapsed_time).seconds
         print "waiting {} seconds for siege to complete".format(seconds_to_wait)
         time.sleep(seconds_to_wait)
     print "pushing logs to s3"
     results_file = open(score_filename, 'rb')
     load_file = open(siege_filename, 'rb')
-    bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + today_date + "results_check.log",
+    bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "results_check.log",
                       Body=results_file, ContentDisposition='inline', ContentType='text/plain')
-    bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + today_date + "load_test.log", Body=load_file,
+    bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "load_test.log", Body=load_file,
                       ContentDisposition='inline', ContentType='text/plain')
     results_file.close()
     load_file.close()
