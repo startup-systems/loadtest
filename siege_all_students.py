@@ -1,20 +1,29 @@
 import subprocess, boto3
 import json
-import os
+import os, sys
 import csv
 import urllib2
 import json
 import datetime
 import time, csv, socket
+import logging
 
 BUCKET_NAME = 'startup-systems-results'
 MINS_TO_RUN_SIEGE = 5
 BASE_OUTPUT_DIR = '/opt/students/'
-CONFIG_DIR = './'
-STUDENT_FILE = '{}example_student_list.json'.format(CONFIG_DIR)
+CONFIG_DIR = '/home/ubuntu/'
+STUDENT_FILE = '{}student_list.json'.format(CONFIG_DIR)
 IMAGES_FILE = '{}images.csv'.format(CONFIG_DIR)
+LOG_DIR = '/home/ubuntu/logs/'
 
-print "-------------------------- begining siege run on all students ---------------"
+log_filename = '{}{}siege_all_students.log'.format(LOG_DIR, int(time.time()))
+logger = logging.getLogger('siege_all')
+hdlr = logging.FileHandler(log_filename)
+formatter = logging.Formatter('%(asctime)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr) 
+logger.setLevel(logging.DEBUG)
+logger.info("-------------------------- begining siege run on all students ---------------")
 student_list = json.loads(open(STUDENT_FILE, 'r').read())
 start_time = datetime.datetime.now().replace(microsecond=0)
 s3 = boto3.resource('s3')
@@ -22,7 +31,8 @@ bucket = s3.Bucket(BUCKET_NAME)
 
 for student in student_list['Students']:
     student_start_time = datetime.datetime.now().replace(microsecond=0)
-    print "====================================\nStarting student " + student
+    logger.info("====================================")
+    logger.info("Starting student " + student)
     student_dir = BASE_OUTPUT_DIR + student
     siege_filename = '{}/siege.log'.format(student_dir)
     score_filename = '{}/score.log'.format(student_dir)
@@ -42,11 +52,11 @@ for student in student_list['Students']:
     siege_command = ["siege", "-t5m", '--concurrent=3', "-b", "-i", "--file=" + student_dir + "/siege_urls.txt",
                      "--log=" + siege_filename, '--user-agent=Magic Browser']
     subprocess.Popen(siege_command, stdout=siege_err_file, stderr=siege_err_file)
-    print "launching siege with command: {}".format(' '.join(siege_command))
+    logger.info("launching siege with command: {}".format(' '.join(siege_command)))
     siege_urls_file.close()
     siege_err_file.close()
 
-    print "begining to check responses for correctness"
+    logger.info("begining to check responses for correctness")
     score_file = open(score_filename, 'a')
     correct_responses = 0
     incorrect_responses = 0
@@ -62,17 +72,17 @@ for student in student_list['Students']:
             try:
                 http_result = urllib2.urlopen(req, timeout=15).read()
             except urllib2.HTTPError as e:
-                print 'The server couldn\'t fulfill the request.'
-                print 'Error code: ', e.code
+                logger.info('The server couldn\'t fulfill the request.')
+                logger.info('Error code: {}'.format(e.code))
                 failed_requests += 1
                 continue
             except urllib2.URLError as e:
-                print 'We failed to reach a server.'
-                print 'Reason: ', e.reason
+                logger.info('We failed to reach a server.')
+                logger.info('Reason: {}'.format(e.reason))
                 failed_requests += 1
                 continue
             except socket.timeout:
-                print "Timeout reached."
+                logger.info("Timeout reached.")
                 failed_requests += 1
                 continue
             try:
@@ -95,22 +105,27 @@ for student in student_list['Students']:
             str(student_elapsed_time)))
     score_file.close()
 
-    print "Finished student " + student + "\nElapsed time: " + str(student_elapsed_time)
+    logger.info("Finished student " + student)
+    logger.info("Elapsed time: " + str(student_elapsed_time))
     if student_elapsed_time < datetime.timedelta(minutes=MINS_TO_RUN_SIEGE):
         seconds_to_wait = (datetime.timedelta(minutes=MINS_TO_RUN_SIEGE) - student_elapsed_time).seconds
-        print "waiting {} seconds for siege to complete".format(seconds_to_wait)
+        logger.info("waiting {} seconds for siege to complete".format(seconds_to_wait))
         time.sleep(seconds_to_wait)
-    print "pushing logs to s3"
-    results_file = open(score_filename, 'rb')
-    load_file = open(siege_filename, 'rb')
-    bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "results_check.log",
+    logger.info("pushing logs to s3")
+    try:
+    	results_file = open(score_filename, 'rb')
+    	bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "results_check.log",
                       Body=results_file, ContentDisposition='inline', ContentType='text/plain')
-    bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "load_test.log", Body=load_file,
+    	load_file = open(siege_filename, 'rb')
+    	bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "load_test.log", Body=load_file,
                       ContentDisposition='inline', ContentType='text/plain')
-    results_file.close()
-    load_file.close()
-    print "===================================="
+    	results_file.close()
+    	load_file.close()
+    except:
+        logger.error("unable to upload to s3")
+        logger.error(sys.exc_info()[0])
+    logger.info("====================================")
 
 end_time = datetime.datetime.now().replace(microsecond=0)
-print "Full siege script run time: " + str(end_time - start_time)
-print "-------------------------- finished siege run on all students ---------------"
+logger.info("Full siege script run time: " + str(end_time - start_time))
+logger.info("-------------------------- finished siege run on all students ---------------")
