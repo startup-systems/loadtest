@@ -96,14 +96,9 @@ for student in student_list['Students']:
                 correct_responses += 1
             else:
                 incorrect_responses += 1
+
     student_end_time = datetime.datetime.now().replace(microsecond=0)
     student_elapsed_time = (student_end_time - student_start_time)
-    score_file.write(
-        "{}: correct responses: {} incorrect responses: {} failed requests: {} total requests: {} elapsed time total: {}\n".format(
-            str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')), str(correct_responses),
-            str(incorrect_responses), str(failed_requests), str(total_requests),
-            str(student_elapsed_time)))
-    score_file.close()
 
     logger.info("Finished student " + student)
     logger.info("Elapsed time: " + str(student_elapsed_time))
@@ -111,6 +106,17 @@ for student in student_list['Students']:
         seconds_to_wait = (datetime.timedelta(minutes=MINS_TO_RUN_SIEGE) - student_elapsed_time).seconds
         logger.info("waiting {} seconds for siege to complete".format(seconds_to_wait))
         time.sleep(seconds_to_wait)
+
+    with open(siege_filename, 'rb') as siege_results_file:
+        total_successful_requests = int(siege_results_file.readlines()[-1].split(',')[8])
+
+    score_file.write(
+        "{}: correct responses: {} incorrect responses: {} failed requests: {} total requests: {} elapsed time total: {} period score: {}\n".format(
+            str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')), str(correct_responses),
+            str(incorrect_responses), str(failed_requests), str(total_requests),
+            str(student_elapsed_time), str( (total_successful_requests/MINS_TO_RUN_SIEGE) * (correct_responses/100) )))
+    score_file.close()
+
     logger.info("pushing logs to s3")
     try:
     	results_file = open(score_filename, 'rb')
