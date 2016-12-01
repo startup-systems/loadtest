@@ -110,9 +110,13 @@ for student in student_list['Students']:
     total_successful_requests = 0
     if os.path.isfile(siege_filename):
         with open(siege_filename, 'rb') as siege_results_file:
-            last_row_array = siege_results_file.readlines()[-1].split(',')
-            if len(last_row_array) > 7:
-                total_successful_requests = int(last_row_array[8])
+            rows = siege_results_file.readlines()
+            row = rows[-1]
+            if '**** siege aborted due to excessive socket failure. ****' in row:
+                row = rows[-2]
+            row_array = row.split(',')
+            if len(row_array) > 7:
+                total_successful_requests = int(row_array[8])
 
     score_file.write(
         "{}: correct responses: {} incorrect responses: {} failed requests: {} total requests: {} elapsed time total: {} period score: {}\n".format(
