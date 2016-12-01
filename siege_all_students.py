@@ -49,7 +49,7 @@ for student in student_list['Students']:
         for row in csv_images:
             siege_urls_file.write(first_part_url + row[0] + '\n')
     # launch siege
-    siege_command = ["siege", "-t5m", '--concurrent=3', "-b", "-i", "--file=" + student_dir + "/siege_urls.txt",
+    siege_command = ["/usr/local/bin/siege", "-q", "-t5m", '--concurrent=3', "-b", "-i", "--file=" + student_dir + "/siege_urls.txt",
                      "--log=" + siege_filename, '--user-agent=Magic Browser']
     subprocess.Popen(siege_command, stdout=siege_err_file, stderr=siege_err_file)
     logger.info("launching siege with command: {}".format(' '.join(siege_command)))
@@ -107,26 +107,49 @@ for student in student_list['Students']:
         logger.info("waiting {} seconds for siege to complete".format(seconds_to_wait))
         time.sleep(seconds_to_wait)
 
-    with open(siege_filename, 'rb') as siege_results_file:
-        total_successful_requests = int(siege_results_file.readlines()[-1].split(',')[8])
+    total_successful_requests = 0
+    if os.path.isfile(siege_filename):
+        with open(siege_filename, 'rb') as siege_results_file:
+            last_row_array = siege_results_file.readlines()[-1].split(',')
+            if len(last_row_array) > 7:
+                total_successful_requests = int(last_row_array[8])
 
     score_file.write(
         "{}: correct responses: {} incorrect responses: {} failed requests: {} total requests: {} elapsed time total: {} period score: {}\n".format(
             str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')), str(correct_responses),
             str(incorrect_responses), str(failed_requests), str(total_requests),
-            str(student_elapsed_time), str( (total_successful_requests/MINS_TO_RUN_SIEGE) * (correct_responses/100) )))
+            str(student_elapsed_time), str( (total_successful_requests/MINS_TO_RUN_SIEGE) * (correct_responses/100.0) )))
     score_file.close()
+
+    # calculate average score
+    avg_score = 0.0
+    with open(score_filename, 'rb') as read_score_file:
+        total =    0
+        current_sum = 0.0
+        for row in read_score_file:
+            row_array = row.split(' ')
+            if len(row_array) > 19:
+                total += 1
+                current_sum += float(row_array[20])
+        avg_score = ( current_sum / total )
+    with open(student_dir + '/avg_score.txt', 'w') as avg_score_file_write:
+        avg_score_file_write.write(str(avg_score))
 
     logger.info("pushing logs to s3")
     try:
-    	results_file = open(score_filename, 'rb')
-    	bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "results_check.log",
+        results_file = open(score_filename, 'rb')
+        bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "results_check.log",
                       Body=results_file, ContentDisposition='inline', ContentType='text/plain')
-    	load_file = open(siege_filename, 'rb')
-    	bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "load_test.log", Body=load_file,
+        load_file = open(siege_filename, 'rb')
+        bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "load_test.log", Body=load_file,
                       ContentDisposition='inline', ContentType='text/plain')
-    	results_file.close()
-    	load_file.close()
+        avg_score_file = open(student_dir + '/avg_score.txt', 'rb')
+        bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "avg_score.txt",
+                      Body=avg_score_file, ContentDisposition='inline', ContentType='text/plain')
+
+        avg_score_file.close()
+        results_file.close()
+        load_file.close()
     except:
         logger.error("unable to upload to s3")
         logger.error(sys.exc_info()[0])
