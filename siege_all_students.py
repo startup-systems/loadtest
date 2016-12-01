@@ -122,7 +122,7 @@ for student in student_list['Students']:
         "{}: correct responses: {} incorrect responses: {} failed requests: {} total requests: {} elapsed time total: {} period score: {}\n".format(
             str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')), str(correct_responses),
             str(incorrect_responses), str(failed_requests), str(total_requests),
-            str(student_elapsed_time), str( (total_successful_requests/MINS_TO_RUN_SIEGE) * (correct_responses/100.0) )))
+            str(student_elapsed_time), str( (total_successful_requests/float(MINS_TO_RUN_SIEGE)) * (correct_responses/100.0) )))
     score_file.close()
 
     # calculate average score
