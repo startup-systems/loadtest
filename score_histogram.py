@@ -36,7 +36,7 @@ img.seek(0)
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(BUCKET_NAME)
 bucket.put_object(
-    ACL='public-read'
+    ACL='public-read',
     Body=img,
     ContentDisposition='inline',
     ContentType='image/png',
