@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 a = []
 
 plt.hist(a, bins='auto')
+
 plt.title("Distribution of average scores")
 plt.xlabel("Student average score")
 plt.ylabel("Number of students")
-plt.show()
+
+plt.savefig('avg_scores.png')
