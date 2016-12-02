@@ -1,14 +1,16 @@
-# https://plot.ly/matplotlib/histograms/#basic-histogram-with-the-hist-function
+# http://stackoverflow.com/a/3054314/358804
+import matplotlib
+matplotlib.use('Agg')
+
+import glob
 import matplotlib.pyplot as plt
+from pathlib import Path
 
-# Run the following on the server to get the values:
-#
-#   find /opt/students -name avg_score.txt -exec cat {} \; -exec echo -n ',' \; 2>/dev/null; echo
-#
-# then paste them into the list below.
-a = []
 
-plt.hist(a, bins='auto')
+score_files = glob.glob('/opt/students/*/avg_score.txt')
+scores = [float(Path(score_file).read_text()) for score_file in score_files]
+
+plt.hist(scores, bins='auto')
 
 plt.title("Distribution of average scores")
 plt.xlabel("Student average score")
