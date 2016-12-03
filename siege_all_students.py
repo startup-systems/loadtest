@@ -21,10 +21,10 @@ logger = logging.getLogger('siege_all')
 hdlr = logging.FileHandler(log_filename)
 formatter = logging.Formatter('%(asctime)s %(message)s')
 hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
+logger.addHandler(hdlr) 
 logger.setLevel(logging.DEBUG)
 logger.info("-------------------------- begining siege run on all students ---------------")
-student_list = json.loads(open(STUDENT_FILE).read())
+student_list = json.loads(open(STUDENT_FILE, 'r').read())
 start_time = datetime.datetime.now().replace(microsecond=0)
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(BUCKET_NAME)
@@ -44,7 +44,7 @@ for student in student_list['Students']:
     siege_urls_file = open(student_dir + '/siege_urls.txt', 'w')
     siege_err_file = open(student_dir + '/siege_err.log', 'w')
     # create url file for siege to read from
-    with open(IMAGES_FILE, newline='') as csvfile:
+    with open(IMAGES_FILE, 'rb') as csvfile:
         csv_images = csv.reader(csvfile)
         for row in csv_images:
             siege_urls_file.write(first_part_url + row[0] + '\n')
@@ -62,7 +62,7 @@ for student in student_list['Students']:
     incorrect_responses = 0
     failed_requests = 0
     total_requests = 0
-    with open(IMAGES_FILE, newline='') as csvfile:
+    with open(IMAGES_FILE, 'rb') as csvfile:
         csv_images = csv.reader(csvfile)
         for row in csv_images:
             total_requests += 1
@@ -109,7 +109,7 @@ for student in student_list['Students']:
 
     total_successful_requests = 0
     if os.path.isfile(siege_filename):
-        with open(siege_filename) as siege_results_file:
+        with open(siege_filename, 'rb') as siege_results_file:
             rows = siege_results_file.readlines()
             row = rows[-1]
             if '**** siege aborted due to excessive socket failure. ****' in row:
@@ -127,7 +127,7 @@ for student in student_list['Students']:
 
     # calculate average score
     avg_score = 0.0
-    with open(score_filename) as read_score_file:
+    with open(score_filename, 'rb') as read_score_file:
         total =    0
         current_sum = 0.0
         for row in read_score_file:
@@ -141,17 +141,17 @@ for student in student_list['Students']:
 
     logger.info("pushing logs to s3")
     try:
-        results_file = open(score_filename)
+        results_file = open(score_filename, 'rb')
         bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "results_check.log",
                       Body=results_file, ContentDisposition='inline', ContentType='text/plain')
-        load_file = open(siege_filename)
+        load_file = open(siege_filename, 'rb')
         bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "load_test.log", Body=load_file,
                       ContentDisposition='inline', ContentType='text/plain')
-        avg_score_file = open(student_dir + '/avg_score.txt')
+        avg_score_file = open(student_dir + '/avg_score.txt', 'rb')
         bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "avg_score.txt",
                       Body=avg_score_file, ContentDisposition='inline', ContentType='text/plain')
         if os.path.isfile(student_dir + '/siege_err.log'):
-            siege_err_file = open(student_dir + '/siege_err.log')
+            siege_err_file = open(student_dir + '/siege_err.log', 'rb')
             bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "siege_err.log",
                       Body=siege_err_file, ContentDisposition='inline', ContentType='text/plain')
             siege_err_file.close()
