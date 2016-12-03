@@ -150,6 +150,11 @@ for student in student_list['Students']:
         avg_score_file = open(student_dir + '/avg_score.txt', 'rb')
         bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "avg_score.txt",
                       Body=avg_score_file, ContentDisposition='inline', ContentType='text/plain')
+        if os.path.isfile(student_dir + '/siege_err.log'):
+            siege_err_file = open(student_dir + '/siege_err.log', 'rb')
+            bucket.put_object(Key=student_list['Students'][student]['URL'] + "/" + "siege_err.log",
+                      Body=siege_err_file, ContentDisposition='inline', ContentType='text/plain')
+            siege_err_file.close()
 
         avg_score_file.close()
         results_file.close()
