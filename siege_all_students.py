@@ -42,7 +42,7 @@ for student in student_list['Students']:
         os.makedirs(student_dir)
     # create log files
     siege_urls_file = open(student_dir + '/siege_urls.txt', 'w')
-    siege_err_file = open(student_dir + '/siege_err.log', 'w')
+    siege_err_file = open(student_dir + '/siege_err.log', 'a')
     # create url file for siege to read from
     with open(IMAGES_FILE, 'rb') as csvfile:
         csv_images = csv.reader(csvfile)
