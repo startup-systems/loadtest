@@ -1,3 +1,4 @@
+import csv
 import glob
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -23,12 +24,29 @@ max_score = max(scores)
 multiplier = (MAX_GRADE - BASELINE_GRADE) / (BASELINE_SCORE + max_score)
 base = MAX_GRADE - (max_score * multiplier)
 
-scores = [(actual * multiplier + base) for actual in scores]
+grades = [(actual * multiplier + base) for actual in scores]
 
-plt.hist(scores, bins=20)
+
+with open('grades.csv', 'w', newline='') as csvfile:
+    grade_writer = csv.writer(csvfile)
+    grade_writer.writerow(['NetID', 'Grade', 'Add Comments'])
+
+    for i in range(len(score_files)):
+        net_id = score_files[i].split('/')[5]
+        if net_id in ['alf239', 'aidan', 'aidan_aws']:
+            continue
+
+        grade = int(grades[i])
+        score = int(scores[i])
+
+        comment = 'Final score: {}/{}'.format(score, int(max_score))
+        grade_writer.writerow([net_id, grade, comment])
+
+
+plt.hist(grades, bins=20)
 
 plt.title("Final project grades")
-plt.xlabel("Student average score")
+plt.xlabel("Student grade")
 plt.ylabel("Number of students")
 
 plt.show()
